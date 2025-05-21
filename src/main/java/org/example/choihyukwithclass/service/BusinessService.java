@@ -2,6 +2,7 @@ package org.example.choihyukwithclass.service;
 
 import java.util.List;
 
+import org.example.choihyukwithclass.aop.InMemoryCacheSearch;
 import org.example.choihyukwithclass.dto.BusinessRequestDto;
 import org.example.choihyukwithclass.dto.BusinessResponseDto;
 import org.example.choihyukwithclass.entity.Business;
@@ -21,7 +22,13 @@ public class BusinessService {
 	private final BusinessRepository businessRepository;
 
 	@Transactional(readOnly = true)
-	public List<BusinessResponseDto> searchAll(Pageable pageable, String word){
+	public List<BusinessResponseDto> searchAllV1(Pageable pageable, String word){
+		return businessRepository.searchAll(pageable, word);
+	}
+
+	@InMemoryCacheSearch
+	@Transactional(readOnly = true)
+	public List<BusinessResponseDto> searchAllV2(Pageable pageable, String word){
 		return businessRepository.searchAll(pageable, word);
 	}
 
