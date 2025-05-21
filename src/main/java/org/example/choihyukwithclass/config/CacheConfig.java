@@ -5,5 +5,5 @@ import org.springframework.context.annotation.Configuration;
 
 @EnableCaching
 @Configuration
-public class InMemoryCacheConfig {
+public class CacheConfig {
 }

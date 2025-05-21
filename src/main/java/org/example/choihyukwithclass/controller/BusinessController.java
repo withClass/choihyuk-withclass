@@ -35,4 +35,11 @@ public class BusinessController {
 		return businessService.searchAllV2(pageable, keyword);
 	}
 
+	@GetMapping("v3/search/{keyword}")
+	public List<BusinessResponseDto> searchV3(
+		@PathVariable("keyword") String keyword,
+		Pageable pageable
+	){
+		return businessService.searchAllV3(pageable, keyword);
+	}
 }

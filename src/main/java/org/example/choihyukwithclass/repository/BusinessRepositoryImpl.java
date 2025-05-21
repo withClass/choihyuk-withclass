@@ -17,11 +17,15 @@ import lombok.RequiredArgsConstructor;
 public class BusinessRepositoryImpl implements BusinessRepositoryQueryDsl {
 
 	private final JPAQueryFactory queryFactory;
+
 	@Override
 	public List<BusinessResponseDto> searchAll(Pageable pageable, String word) {
 		return queryFactory
 			.select(business)
 			.from(business)
+			.where(
+				word != null && !word.isBlank() ? business.name.containsIgnoreCase(word) : null
+			)
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch()
