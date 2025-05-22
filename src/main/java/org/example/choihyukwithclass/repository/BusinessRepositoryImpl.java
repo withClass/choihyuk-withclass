@@ -23,9 +23,7 @@ public class BusinessRepositoryImpl implements BusinessRepositoryQueryDsl {
 		return queryFactory
 			.select(business)
 			.from(business)
-			.where(
-				word != null && !word.isBlank() ? business.name.containsIgnoreCase(word) : null
-			)
+			.where(business.name.containsIgnoreCase(word))
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch()

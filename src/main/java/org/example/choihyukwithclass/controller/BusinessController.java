@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -41,5 +43,13 @@ public class BusinessController {
 		Pageable pageable
 	){
 		return businessService.searchAllV3(pageable, keyword);
+	}
+
+	@GetMapping("v4/search/{keyword}")
+	public List<BusinessResponseDto> searchV4(
+		@PathVariable("keyword") String keyword,
+		Pageable pageable
+	) throws JsonProcessingException {
+		return businessService.searchAllV4(pageable, keyword);
 	}
 }

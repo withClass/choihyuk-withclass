@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jdi.request.InvalidRequestStateException;
@@ -26,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BusinessService {
 
 	private final BusinessRepository businessRepository;
-	private final RedisTemplate<String, Object> redisTemplate;
+	private final RedisTemplate<String, List<BusinessResponseDto>> businessRedisTemplate;
 	private final ObjectMapper objectMapper;
 
 	@Transactional(readOnly = true)
@@ -42,15 +43,31 @@ public class BusinessService {
 
 	@Transactional(readOnly = true)
 	public List<BusinessResponseDto> searchAllV3(Pageable pageable, String word){
-		String cacheKey = generateSearchCacheKey(word, pageable);
+		String cacheKey = generateCacheKeyWithPageable(word, pageable);
 
-		List<BusinessResponseDto> cachedList = getCahcedList(cacheKey);
-		if(cachedList != null) {
-			return cachedList;
+		List<BusinessResponseDto> cacheResult = businessRedisTemplate.opsForValue().get(cacheKey);
+		if (cacheResult != null) {
+			return cacheResult;
 		}
 
 		List<BusinessResponseDto> result = businessRepository.searchAll(pageable, word);
-		redisTemplate.opsForValue().set(cacheKey, result, Duration.ofMinutes(10));
+		businessRedisTemplate.opsForValue().set(cacheKey, result, Duration.ofMinutes(10));
+		return result;
+	}
+
+	@Transactional(readOnly = true)
+	public List<BusinessResponseDto> searchAllV4(Pageable pageable, String keyword) throws JsonProcessingException {
+		String cacheKey = "searchResults:" + keyword.trim().toLowerCase();
+		String field = pageable.getPageNumber() + ":" + pageable.getPageSize();
+
+		List<BusinessResponseDto> cachedListByHash = getCachedListByHash(cacheKey, field);
+		if (cachedListByHash != null) {
+			return cachedListByHash;
+		}
+
+		List<BusinessResponseDto> result = businessRepository.searchAll(pageable, keyword);
+		businessRedisTemplate.opsForHash().put(cacheKey, field, result);
+		businessRedisTemplate.expire(cacheKey, Duration.ofMinutes(10));
 		return result;
 	}
 
@@ -81,22 +98,29 @@ public class BusinessService {
 	 * @param pageable 페이지 객체
 	 * @return 문자열 캐시키를 반환
 	 */
-	private String generateSearchCacheKey(String keyword, Pageable pageable){
-		return keyword + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
+	private String generateCacheKeyWithPageable(String keyword, Pageable pageable){
+		return keyword.trim().toLowerCase() + ":" + pageable.getPageNumber() + ":" + pageable.getPageSize();
 	}
 
 	/**
-	 * Redis 캐시가 존재하면, 역직렬화해서 반환하는 메서드
-	 * @param cacheKey 캐시키
+	 * Redis 캐시가 존재하면, 역직렬화(Hash)해서 반환하는 메서드
+	 * @param cacheKey 일반키
+	 * @param field 필드키
 	 * @return 응답 리스트 객체로 반환
 	 */
-	private List<BusinessResponseDto> getCahcedList(String cacheKey){
-		Object cachedList = redisTemplate.opsForValue().get(cacheKey);
+	private List<BusinessResponseDto> getCachedListByHash(String cacheKey, String field) {
+		Object cachedList = businessRedisTemplate.opsForHash().get(cacheKey, field);
+		if (cachedList == null) return null;
 
-		// ObjectMapper 역직렬화 (JSON → List<Dto>)
-		return objectMapper.convertValue(
-			cachedList,
-			new TypeReference<List<BusinessResponseDto>>() {}
-		);
+		try {
+			// ObjectMapper 역직렬화 (JSON → List<Dto>) 해서 반환
+			return objectMapper.readValue(
+				cachedList.toString(),
+				new TypeReference<List<BusinessResponseDto>>() {}
+			);
+		} catch (JsonProcessingException e) {
+			log.warn("Failed to deserialize cached value for key: {} field: {}", cacheKey, field, e);
+			return null;
+		}
 	}
 }
