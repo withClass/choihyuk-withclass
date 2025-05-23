@@ -1,5 +1,6 @@
 package org.example.choihyukwithclass.dto;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import org.example.choihyukwithclass.entity.Business;
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 @Getter
-public class BusinessResponseDto {
+public class BusinessResponseDto implements Serializable {
 	private final Long id;
 	private final String name;
 	private final String businessNumber;

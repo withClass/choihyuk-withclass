@@ -3,11 +3,11 @@ package org.example.choihyukwithclass.service;
 import java.time.Duration;
 import java.util.List;
 
-import org.example.choihyukwithclass.aop.InMemoryCacheSearch;
 import org.example.choihyukwithclass.dto.BusinessRequestDto;
 import org.example.choihyukwithclass.dto.BusinessResponseDto;
 import org.example.choihyukwithclass.entity.Business;
 import org.example.choihyukwithclass.repository.BusinessRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class BusinessService {
 		return businessRepository.searchAll(pageable, word);
 	}
 
-	@InMemoryCacheSearch
+	@Cacheable("searchBusiness")
 	@Transactional(readOnly = true)
 	public List<BusinessResponseDto> searchAllV2(Pageable pageable, String word){
 		return businessRepository.searchAll(pageable, word);
@@ -66,7 +66,9 @@ public class BusinessService {
 		}
 
 		List<BusinessResponseDto> result = businessRepository.searchAll(pageable, keyword);
-		businessRedisTemplate.opsForHash().put(cacheKey, field, result);
+
+		String json = objectMapper.writeValueAsString(result);
+		businessRedisTemplate.opsForHash().put(cacheKey, field, json);
 		businessRedisTemplate.expire(cacheKey, Duration.ofMinutes(10));
 		return result;
 	}
