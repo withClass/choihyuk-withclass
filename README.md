@@ -81,16 +81,16 @@
 - **테스트 조건**: 1초에 1명씩, 총 100초간 100명의 사용자가 1회씩 요청
 - 단일 검색 키워드에 대해 반복 요청하여, 캐시 효과 측정
 #### v1 (DB 조회)
-![img.png](images/v1.png)
+![img.png](src/images/v1.png)
 
 #### v2 (LocalMemory Cache)
-![img.png](images/v2.png)
+![img.png](src/images/v2.png)
 
 #### v3 (Redis + String)
-![img.png](images/v3.png)
+![img.png](src/images/v3.png)
 
 #### v4 (Redis + Hash)
-![img.png](images/v4.png)
+![img.png](src/images/v4.png)
 
 | 버전     | 캐시 방식              | 평균 응답 시간 (ms) | 개선 효과 (v1 대비) |
 | ------ | ------------------ | ------------- |---------------|
@@ -110,8 +110,8 @@ vUser(Virtual User)를 점진적으로 늘려봤다.
   | 4  | 700      | 100         | 1          |
   | 5  | 1000     | 100         | 1          |
 
-![img.png](images/v1Graph.png)
-![img_1.png](images/v4Graph.png)
+![img.png](src/images/v1Graph.png)
+![img_1.png](src/images/v4Graph.png)
 
 `v1(DB조회)`의 경우, 110~130ms를 유지하다 18:42:20에 병목현상이 발생하였다.
 또한 응답의 속도가 일정하지 못하다.
